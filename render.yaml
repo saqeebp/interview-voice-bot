@@ -1,13 +1,13 @@
 services:
   - type: web
-    name: interview-voice-bot
+    name: interview-voice-bot-backend
     runtime: node
     buildCommand: cd server && npm install
     startCommand: node server/server.js
     env: node
     envVars:
-      - key: OPENAI_API_KEY
-        value: your_openai_api_key_here
+      - key: NODE_ENV
+        value: production
     plan: free
     healthCheckPath: /health
 
@@ -15,3 +15,7 @@ services:
     name: interview-voice-bot-frontend
     buildCommand: cd client && npm install && npm run build
     outputDirectory: client/build
+    envVars:
+      - key: REACT_APP_BACKEND_URL
+        value: https://interview-voice-bot-backend.onrender.com
+    plan: free
