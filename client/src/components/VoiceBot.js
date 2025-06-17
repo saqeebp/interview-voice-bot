@@ -96,9 +96,7 @@ const VoiceBot = () => {
 
   const getAIResponse = async (userMessage) => {
     try {
-      const apiUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5000/api/chat' 
-        : 'https://interview-voice-bot.onrender.com/api/chat';
+      const apiUrl = 'https://interview-voice-bot.onrender.com';
       
       const response = await fetch(apiUrl, {
         method: 'POST',
