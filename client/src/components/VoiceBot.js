@@ -7,7 +7,7 @@ const VoiceBot = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
-  const timeoutRef = useRef(null); // Add this for timeout management
+  const timeoutRef = useRef(null);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -19,7 +19,7 @@ const VoiceBot = () => {
 
     recognitionRef.current = new SpeechRecognition();
     recognitionRef.current.continuous = false;
-    recognitionRef.current.interimResults = true; // Enable partial results
+    recognitionRef.current.interimResults = true;
     recognitionRef.current.lang = 'en-US';
 
     recognitionRef.current.onresult = (event) => {
@@ -57,7 +57,10 @@ const VoiceBot = () => {
       stopListening();
       
       // Get the final user message
-      const userText = conversation[conversation.length - 1]?.text || '';
+      const userText = conversation.length > 0 
+        ? conversation[conversation.length - 1].text 
+        : '';
+        
       if (userText.trim()) {
         await getAIResponse(userText);
       }
@@ -111,7 +114,7 @@ const VoiceBot = () => {
 
   const getAIResponse = async (userMessage) => {
     try {
-      // REPLACE THIS WITH YOUR ACTUAL BACKEND URL
+      // REPLACE WITH YOUR ACTUAL BACKEND URL
       const backendUrl = "https://interview-voice-bot.onrender.com";
       const apiUrl = `${backendUrl}/api/chat`;
       
