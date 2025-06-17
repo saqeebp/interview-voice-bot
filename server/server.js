@@ -41,6 +41,7 @@ You are responding as a job candidate. Use these specific responses:
 app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
+    console.log('Received question:', message);
     
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -54,6 +55,16 @@ app.post('/api/chat', async (req, res) => {
       max_tokens: 150,
       temperature: 0.7
     });
+
+    const response = completion.choices[0].message.content;
+    console.log('Generated response:', response);
+    
+    res.json({ response });
+  } catch (error) {
+    console.error('OpenAI Error:', error);
+    res.status(500).json({ error: "AI processing failed" });
+  }
+});
 
     const response = completion.choices[0].message.content;
     res.json({ response });
