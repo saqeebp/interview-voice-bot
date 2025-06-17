@@ -111,10 +111,11 @@ const VoiceBot = () => {
 
   const getAIResponse = async (userMessage) => {
     try {
-      const isDevelopment = process.env.NODE_ENV === 'development';
-      const apiUrl = isDevelopment 
-        ? 'http://localhost:5000/api/chat' 
-        : 'https://interview-voice-bot.onrender.com/api/chat';
+      // REPLACE THIS WITH YOUR ACTUAL BACKEND URL
+      const backendUrl = "https://interview-voice-bot.onrender.com";
+      const apiUrl = `${backendUrl}/api/chat`;
+      
+      console.log("Sending to API:", apiUrl, "Message:", userMessage);
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -122,11 +123,15 @@ const VoiceBot = () => {
         body: JSON.stringify({ message: userMessage })
       });
       
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error(`API error: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log("API response:", data);
+      
       const botText = data.response;
       setConversation(prev => [...prev, { speaker: 'bot', text: botText }]);
       speak(botText);
