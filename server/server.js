@@ -46,7 +46,7 @@ app.post('/api/chat', async (req, res) => {
     console.log('Received question:', message);
     
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-audio-preview-2025-06-03",
+      model: "gpt-3.5-turbo-0125",
       messages: [
         { 
           role: "system", 
