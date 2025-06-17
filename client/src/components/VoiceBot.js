@@ -15,16 +15,32 @@ const VoiceBot = () => {
       alert("Your browser doesn't support speech recognition. Please use Chrome or Edge.");
       return;
     }
-
+  
     recognitionRef.current = new SpeechRecognition();
     recognitionRef.current.continuous = false;
-    recognitionRef.current.interimResults = false;
+    recognitionRef.current.interimResults = true; // Enable interim results
     recognitionRef.current.lang = 'en-US';
+    
+    // Add these settings to improve speech detection:
+    recognitionRef.current.maxAlternatives = 1;
+    recognitionRef.current.speechTimeout = 10000; // 10 seconds timeout
 
     recognitionRef.current.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
-      setConversation(prev => [...prev, { speaker: 'user', text: transcript }]);
-      await getAIResponse(transcript);
+      const transcript = Array.from(event.results)
+      .map(result => result[0].transcript)
+      .join('');
+      setConversation(prev => {
+        const newConvo = [...prev];
+        const lastIndex = newConvo.length - 1;
+        
+        if (lastIndex >= 0 && newConvo[lastIndex].speaker === 'user') {
+          newConvo[lastIndex].text = transcript;
+        } else {
+          newConvo.push({ speaker: 'user', text: transcript });
+        }
+        
+        return newConvo;
+      });
     };
 
     recognitionRef.current.onerror = (event) => {
@@ -35,6 +51,15 @@ const VoiceBot = () => {
     recognitionRef.current.onend = () => {
       setIsListening(false);
     };
+
+    //New Code
+    recognitionRef.current.onspeechend = async () => {
+      stopListening();
+        const userText = conversation[conversation.length - 1]?.text || '';
+        if (userText.trim()) {
+          await getAIResponse(userText);
+        }
+      };
 
     return () => {
       if (recognitionRef.current) {
@@ -47,8 +72,22 @@ const VoiceBot = () => {
     if (isSpeaking) return;
     
     try {
+      // Clear previous state
+      setConversation([]);
+      
       recognitionRef.current.start();
       setIsListening(true);
+      
+      // Add timeout to automatically stop after 15 seconds
+      setTimeout(() => {
+        if (isListening) {
+          stopListening();
+          setConversation(prev => [...prev, { 
+            speaker: 'bot', 
+            text: "I didn't hear anything. Please try again." 
+          }]);
+        }
+      }, 15000);
     } catch (error) {
       console.error('Error starting recognition:', error);
       setIsListening(false);
