@@ -7,6 +7,7 @@ const VoiceBot = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
+  const timeoutRef = useRef(null); // Add this for timeout management
 
   // Initialize speech recognition
   useEffect(() => {
@@ -15,20 +16,18 @@ const VoiceBot = () => {
       alert("Your browser doesn't support speech recognition. Please use Chrome or Edge.");
       return;
     }
-  
+
     recognitionRef.current = new SpeechRecognition();
     recognitionRef.current.continuous = false;
-    recognitionRef.current.interimResults = true; // Enable interim results
+    recognitionRef.current.interimResults = true; // Enable partial results
     recognitionRef.current.lang = 'en-US';
-    
-    // Add these settings to improve speech detection:
-    recognitionRef.current.maxAlternatives = 1;
-    recognitionRef.current.speechTimeout = 10000; // 10 seconds timeout
 
-    recognitionRef.current.onresult = async (event) => {
+    recognitionRef.current.onresult = (event) => {
       const transcript = Array.from(event.results)
-      .map(result => result[0].transcript)
-      .join('');
+        .map(result => result[0].transcript)
+        .join('');
+      
+      // Update the latest user message
       setConversation(prev => {
         const newConvo = [...prev];
         const lastIndex = newConvo.length - 1;
@@ -46,30 +45,46 @@ const VoiceBot = () => {
     recognitionRef.current.onerror = (event) => {
       console.error('Speech recognition error', event.error);
       setIsListening(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
 
     recognitionRef.current.onend = () => {
       setIsListening(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
 
-    //New Code
     recognitionRef.current.onspeechend = async () => {
       stopListening();
-        const userText = conversation[conversation.length - 1]?.text || '';
-        if (userText.trim()) {
-          await getAIResponse(userText);
-        }
-      };
+      
+      // Get the final user message
+      const userText = conversation[conversation.length - 1]?.text || '';
+      if (userText.trim()) {
+        await getAIResponse(userText);
+      }
+    };
 
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
+  // Define stopListening function
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
   const startListening = () => {
-    if (isSpeaking) return;
+    if (isSpeaking || isListening) return;
     
     try {
       // Clear previous state
@@ -79,7 +94,7 @@ const VoiceBot = () => {
       setIsListening(true);
       
       // Add timeout to automatically stop after 15 seconds
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         if (isListening) {
           stopListening();
           setConversation(prev => [...prev, { 
@@ -96,7 +111,10 @@ const VoiceBot = () => {
 
   const getAIResponse = async (userMessage) => {
     try {
-      const apiUrl = 'https://interview-voice-bot.onrender.com';
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const apiUrl = isDevelopment 
+        ? 'http://localhost:5000/api/chat' 
+        : 'https://interview-voice-bot.onrender.com/api/chat';
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -157,8 +175,8 @@ const VoiceBot = () => {
       <div className="controls">
         <button 
           className={`mic-button ${isListening ? 'listening' : ''}`}
-          onClick={startListening}
-          disabled={isListening || isSpeaking}
+          onClick={isListening ? stopListening : startListening}
+          disabled={isSpeaking}
         >
           {isListening ? (
             <>
