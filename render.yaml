@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: interview-voice-bot
+    runtime: node
+    buildCommand: cd server && npm install
+    startCommand: node server/server.js
+    env: node
+    envVars:
+      - key: OPENAI_API_KEY
+        value: your_openai_api_key_here
+    plan: free
+    healthCheckPath: /health
+
+  - type: static_site
+    name: interview-voice-bot-frontend
+    buildCommand: cd client && npm install && npm run build
+    outputDirectory: client/build
