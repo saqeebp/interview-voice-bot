@@ -1,21 +1,23 @@
 require('dotenv').config();
 const express = require('express');
 const { OpenAI } = require('openai');
-const path = require('path');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
+// CORS Configuration - UPDATE YOUR FRONTEND URL HERE
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://interview-voice-bot-frontend.onrender.com'
+    'https://interview-voice-bot-frontend.onrender.com' // REPLACE WITH YOUR FRONTEND URL
   ],
   methods: ['POST', 'GET'],
   credentials: true
 }));
+
+app.use(express.json());
 
 // OpenAI setup
 const openai = new OpenAI({
@@ -37,7 +39,7 @@ You are responding as a job candidate. Use these specific responses:
 5. Pushing boundaries: "I regularly take on stretch projects and seek critical feedback."
 `;
 
-// API endpoint
+// API endpoint with detailed logging
 app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
@@ -66,23 +68,15 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-    const response = completion.choices[0].message.content;
-    res.json({ response });
-  } catch (error) {
-    console.error('OpenAI Error:', error);
-    res.status(500).json({ error: "AI processing failed" });
-  }
-});
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Serve frontend in production
+// Redirect to frontend in production
 if (process.env.NODE_ENV === 'production') {
   app.get('/', (req, res) => {
-    res.redirect('https://interview-voice-bot-frontend.onrender.com');
+    res.redirect('https://interview-voice-bot-frontend.onrender.com'); // YOUR FRONTEND URL
   });
 }
 
