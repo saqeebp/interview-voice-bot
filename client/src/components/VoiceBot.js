@@ -8,7 +8,8 @@ const VoiceBot = () => {
   const recognitionRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
   const timeoutRef = useRef(null);
-
+  const latestTranscriptRef = useRef('');
+  
   // Initialize speech recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -23,24 +24,26 @@ const VoiceBot = () => {
     recognitionRef.current.lang = 'en-US';
 
     recognitionRef.current.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0].transcript)
-        .join('');
-      
-      // Update the latest user message
-      setConversation(prev => {
-        const newConvo = [...prev];
-        const lastIndex = newConvo.length - 1;
-        
-        if (lastIndex >= 0 && newConvo[lastIndex].speaker === 'user') {
-          newConvo[lastIndex].text = transcript;
-        } else {
-          newConvo.push({ speaker: 'user', text: transcript });
-        }
-        
-        return newConvo;
-      });
-    };
+    const transcript = Array.from(event.results)
+      .map(result => result[0].transcript)
+      .join('');
+  
+    latestTranscriptRef.current = transcript;
+  
+    setConversation(prev => {
+      const newConvo = [...prev];
+      const lastIndex = newConvo.length - 1;
+  
+      if (lastIndex >= 0 && newConvo[lastIndex].speaker === 'user') {
+        newConvo[lastIndex].text = transcript;
+      } else {
+        newConvo.push({ speaker: 'user', text: transcript });
+      }
+  
+      return newConvo;
+    });
+  };
+
 
     recognitionRef.current.onerror = (event) => {
       console.error('Speech recognition error', event.error);
@@ -55,16 +58,14 @@ const VoiceBot = () => {
 
     recognitionRef.current.onspeechend = async () => {
       stopListening();
-      
-      // Get the final user message
-      const userText = conversation.length > 0 
-        ? conversation[conversation.length - 1].text 
-        : '';
-        
-      if (userText.trim()) {
+    
+      const userText = latestTranscriptRef.current.trim();
+    
+      if (userText) {
         await getAIResponse(userText);
       }
     };
+
 
     return () => {
       if (recognitionRef.current) {
