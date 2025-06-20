@@ -45,7 +45,7 @@ app.post('/api/chat', async (req, res) => {
     const { message } = req.body;
     console.log('Received question:', message);
 
-    const model = genAI.getGenerativeModel({ model: "gemma-3n-e4b-it" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
 You are responding as a job candidate. Use these specific responses:
