@@ -12,7 +12,7 @@ function App() {
         <VoiceBot />
       </main>
       <footer>
-        <p>Powered by OpenAI • Built for Job Interview</p>
+        <p>Powered by Google • Built for Job Interview</p>
       </footer>
     </div>
   );
