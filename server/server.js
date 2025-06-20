@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { OpenAI } = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const cors = require('cors');
 const path = require('path');
 
@@ -19,54 +19,57 @@ app.use(cors({
 
 app.use(express.json());
 
-// OpenAI setup
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Google API Setup
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 
 // YOUR PERSONAL RESPONSES - CUSTOMIZE THESE!
-const PERSONAL_PROFILE = `
-You are responding as a job candidate. Use these specific responses:
+// const PERSONAL_PROFILE = `
+// You are responding as a job candidate. Use these specific responses:
 
-1. Life story: "I'm a passionate developer with 5+ years in fintech. I started coding at 15, studied CS at MIT, and specialize in building scalable APIs."
+// 1. Life story: "I'm a passionate developer with 5+ years in fintech. I started coding at 15, studied CS at MIT, and specialize in building scalable APIs."
 
-2. Superpower: "Turning complex problems into elegant solutions. I reduced processing time by 85% at my last role."
+// 2. Superpower: "Turning complex problems into elegant solutions. I reduced processing time by 85% at my last role."
 
-3. Growth areas: "1) Cloud architecture 2) Technical leadership 3) AI ethics"
+// 3. Growth areas: "1) Cloud architecture 2) Technical leadership 3) AI ethics"
 
-4. Misconception: "That I'm only technical. I actually love mentoring and collaborative design."
+// 4. Misconception: "That I'm only technical. I actually love mentoring and collaborative design."
 
-5. Pushing boundaries: "I regularly take on stretch projects and seek critical feedback."
-`;
+// 5. Pushing boundaries: "I regularly take on stretch projects and seek critical feedback."
+// `;
 
 // API endpoint with detailed logging
 app.post('/api/chat', async (req, res) => {
   try {
     const { message } = req.body;
     console.log('Received question:', message);
-    
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { 
-          role: "system", 
-          content: `Respond as the job candidate. Use the following information: ${PERSONAL_PROFILE}` 
-        },
-        { role: "user", content: message }
-      ],
-      max_tokens: 150,
-      temperature: 0.7
-    });
 
-    const response = completion.choices[0].message.content;
-    console.log('Generated response:', response);
-    
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const prompt = `
+You are responding as a job candidate. Use these specific responses:
+
+1. Life story: "I'm a passionate developer with 5+ years in fintech. I started coding at 15, studied CS at MIT, and specialize in building scalable APIs."
+2. Superpower: "Turning complex problems into elegant solutions. I reduced processing time by 85% at my last role."
+3. Growth areas: "1) Cloud architecture 2) Technical leadership 3) AI ethics"
+4. Misconception: "That I'm only technical. I actually love mentoring and collaborative design."
+5. Pushing boundaries: "I regularly take on stretch projects and seek critical feedback."
+
+Question: ${message}
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = result.response.text();
+
+    console.log("Gemini response:", response);
     res.json({ response });
   } catch (error) {
-    console.error('OpenAI Error:', error);
+    console.error("Gemini Error:", error);
     res.status(500).json({ error: "AI processing failed" });
   }
 });
+
 
 // Health check endpoint
 app.get('/health', (req, res) => {
